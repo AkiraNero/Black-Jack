@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; }
+        .container { width: 320px; margin: 50px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        h1 { text-align: center; }
+        .button { display: block; margin: 10px auto; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .button:hover { background: #218838; }
+        .result { text-align: center; margin-top: 20px; }
+        .card { width: 50px; height: 70px; border: 1px solid #000; display: inline-block; margin: 5px; position: relative; animation: slideIn 0.5s; }
+        .card .number { position: absolute; top: 5px; left: 5px; font-weight: bold; }
+        .card .number.bottom { position: absolute; bottom: 5px; right: 5px; transform: rotate(180deg); }
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Blackjack</h1>
+        <div id="game">
+            <p>Chips: <span id="chips">20</span></p>
+            <label for="bet">Bet Chips:</label>
+            <input type="number" id="bet" value="1" min="1" max="20">
+            <button class="button" id="startGame">Deal Cards</button>
+            <div id="dealerCards"></div>
+            <div id="playerCards"></div>
+            <div class="result" id="result"></div>
+        </div>
+    </div>
+
+    <script>
+    let playerChips = 20;
+    let playerCards = [];
+    let dealerCards = [];
+
+    function getRandomCard() {
+        const cards = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        return cards[Math.floor(Math.random() * cards.length)];
+    }
+
+    function getRandomColor() {
+        return Math.random() < 0.5 ? 'black' : 'red';
+    }
+
+    function startGame() {
+        const bet = parseInt(document.getElementById('bet').value);
+        if (bet > playerChips) {
+            alert("You don't have enough chips!");
+            return;
+        }
+        playerCards = [getRandomCard(), getRandomCard()];
+        dealerCards = [getRandomCard(), getRandomCard()];
+        displayCards();
+        determineWinner(bet);
+    }
+
+    function calculateScore(cards) {
+        let score = 0;
+        let aceCount = 0;
+
+        cards.forEach(card => {
+            if (card === 'A') {
+                score += 11;
+                aceCount++;
+            } else if (['K', 'Q', 'J'].includes(card)) {
+                score += 10;
+            } else {
+                score += parseInt(card);
+            }
+        });
+
+        while (score > 21 && aceCount > 0) {
+            score -= 10;
+            aceCount--;
+        }
+
+        return score;
+    }
+
+    function displayCards() {
+    document.getElementById('dealerCards').innerHTML = `Dealer Cards: ${dealerCards.map(card => {
+        const color = getRandomColor(); // Get color once per card
+        return `<div class="card" style="border-color: ${color};"><div class="number" style="color: ${color};">${card}</div><div class="number bottom" style="color: ${color};">${card}</div></div>`;
+    }).join('')} (Score: ${calculateScore(dealerCards)})`;
+
+    document.getElementById('playerCards').innerHTML = `Player Cards: ${playerCards.map(card => {
+        const color = getRandomColor(); // Get color once per card
+        return `<div class="card" style="border-color: ${color};"><div class="number" style="color: ${color};">${card}</div><div class="number bottom" style="color: ${color};">${card}</div></div>`;
+    }).join('')} (Score: ${calculateScore(playerCards)})`;
+}
+
+
+    function determineWinner(bet) {
+        const playerScore = calculateScore(playerCards);
+        const dealerScore = calculateScore(dealerCards);
+        let resultText = '';
+
+        if (playerScore > 21) {
+            resultText = 'Player busts! Dealer wins!';
+        } else if (dealerScore > 21 || playerScore > dealerScore) {
+            resultText = 'Player wins!';
+            playerChips += bet;
+        } else if (playerScore < dealerScore) {
+            resultText = 'Dealer wins!';
+            playerChips -= bet;
+        } else {
+            resultText = 'It\'s a tie!';
+        }
+
+        document.getElementById('result').innerText = resultText;
+        document.getElementById('chips').innerText = playerChips;
+    }
+
+    document.getElementById('startGame').addEventListener('click', startGame);
+    </script>
+</body>
+</html>
